@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    ports:
+      - "8081:8080"  # Expose user-service on port 8081 locally
+    environment:
+      - MONGODB_URI=mongodb://user-service-mongo:27017  # Mongo connection for user-service
+    depends_on:
+      - user-service-mongo
+    networks:
+      - app-network
+    volumes:
+      - ./user-service:/app  # Mount the code to the container for easy testing
+  
+  user-service-mongo:
+    image: mongo:6.0
+    container_name: user-service-mongo
+    ports:
+      - "27018:27017"  # Expose MongoDB for user-service
+    volumes:
+      - user-service-mongo-data:/data/db  # MongoDB data volume
+    networks:
+      - app-network
+  
+  task-manager:
+    build:
+      context: ./task-manager
+    container_name: task-manager
+    ports:
+      - "8080:8080"  # Expose task-manager on port 8080 locally
+    environment:
+      - MONGODB_URI=mongodb://task-manager-mongo:27017  # Mongo connection for task-manager
+      - USER_SERVICE_API_URL=http://user-service:8080  # API URL for task-manager to access user-service
+    depends_on:
+      - task-manager-mongo
+      - user-service
+    networks:
+      - app-network
+    volumes:
+      - ./task-manager:/app  # Mount the code to the container for easy testing
+  
+  task-manager-mongo:
+    image: mongo:6.0
+    container_name: task-manager-mongo
+    ports:
+      - "27019:27017"  # Expose MongoDB for task-manager
+    volumes:
+      - task-manager-mongo-data:/data/db  # MongoDB data volume
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  user-service-mongo-data:
+  task-manager-mongo-data:

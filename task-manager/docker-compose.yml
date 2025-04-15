@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  user-service:
+    image: user-service
+    container_name: user-service
+    ports:
+      - "8081:8080"
+    networks:
+      - app-network
+
+  task-manager:
+    image: task-manager
+    container_name: task-manager
+    environment:
+      - user-service-URL=http://user-service:8081  # Update to refer to the container name
+    ports:
+      - "8080:8080"   
+    depends_on:
+      - user-service
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
